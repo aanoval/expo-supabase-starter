@@ -32,20 +32,22 @@
       },
       "bundleIdentifier": "com.flemingvincent.ExpoSupabaseStarter"
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png"
-      },
-      "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "cover",
-        "backgroundColor": "#ffffff",
-        "dark": {
-          "backgroundColor": "#000000",
-          "resizeMode": "cover",
-          "image": "./assets/splash-dark.png"
-        }
-      }
+   "android": {
+  "package": "com.flemingvincent.exposupabasestarter",
+  "adaptiveIcon": {
+    "foregroundImage": "./assets/adaptive-icon.png"
+  },
+  "splash": {
+    "image": "./assets/splash.png",
+    "resizeMode": "cover",
+    "backgroundColor": "#ffffff",
+    "dark": {
+      "backgroundColor": "#000000",
+      "resizeMode": "cover",
+      "image": "./assets/splash-dark.png"
+    }
+  }
+
     },
     "experiments": {
       "typedRoutes": true
