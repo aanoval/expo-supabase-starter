@@ -27,17 +27,25 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Install Android SDK
-      uses: android-actions/setup-android@v3
-      with:
-        cmdline-tools-version: '13.0'
+    - name: Install Android SDK Command-line Tools
+      run: |
+        mkdir -p $ANDROID_HOME/cmdline-tools
+        wget -O commandlinetools.zip https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip
+        unzip commandlinetools.zip -d $ANDROID_HOME/cmdline-tools
+        mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+
+    - name: Accept Android SDK Licenses
+      run: |
+        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+
+    - name: Install Android NDK
+      run: |
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
 
     - name: Install dependencies
       run: npm install
-
-    - name: Setup Android NDK
-      run: |
-        sdkmanager "ndk;26.1.10909125"
 
     - name: Build APK
       run: |
