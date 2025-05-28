@@ -1,0 +1,78 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm install
+      env:
+        NODE_OPTIONS: --max-old-space-size=4096
+
+    - name: Cache Android SDK
+      uses: actions/cache@v3
+      with:
+        path: ~/.android
+        key: android-sdk-${{ hashFiles('**/android/build.gradle') }}
+        restore-keys: android-sdk-
+
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+        cache: 'gradle'
+
+    - name: Install Android SDK
+      uses: android-actions/setup-android@v2
+      with:
+        android-version: '33'
+        tools: true
+        build-tools: '33.0.0'
+
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew clean
+        ./gradlew assembleRelease --stacktrace
+
+    - name: Check APK
+      run: |
+        ls -l android/app/build/outputs/apk/release/app-release-unsigned.apk
+        if [ ! -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+          echo "APK file not found!"
+          exit 1
+        fi
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: android-apk
+        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+        if-no-files-found: error
+
+    - name: Upload build info
+      uses: actions/upload-artifact@v3
+      with:
+        name: build-info
+        path: |
+          android/app/build/outputs/apk/release/output.json
+          android/app/build/outputs/apk/release/mapping.txt
