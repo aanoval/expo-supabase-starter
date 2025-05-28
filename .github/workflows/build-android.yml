@@ -9,7 +9,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write # Diperlukan untuk commit folder android
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -32,6 +34,21 @@ jobs:
           npm install --package-lock-only
         fi
 
+    - name: Initialize React Native Android project
+      run: |
+        if [ ! -d android ]; then
+          npx react-native@0.72.0 init TempProject --skip-install
+          mv TempProject/android .
+          rm -rf TempProject
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add android
+          git commit -m "Add android folder for React Native build" || echo "No changes to commit"
+          git push
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Cache Android SDK
       uses: actions/cache@v3
       with:
@@ -43,7 +60,7 @@ jobs:
       uses: actions/setup-java@v3
       with:
         distribution: 'zulu'
-        java-version: '17' # Diubah ke Java 17 untuk mendukung sdkmanager
+        java-version: '17'
         cache: 'gradle'
 
     - name: Install Android SDK
