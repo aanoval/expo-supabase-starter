@@ -62,39 +62,49 @@ jobs:
 
       - name: Create index.js
         run: |
-          echo "import { AppRegistry } from 'react-native'; import App from './App'; import { name as appName } from './app.json'; AppRegistry.registerComponent(appName, () => App);" > index.js
-        if: steps.check-init.outputs.init_needed == 'true' && !exists('index.js')
+          if [ ! -f index.js ]; then
+            echo "import { AppRegistry } from 'react-native'; import App from './App'; import { name as appName } from './app.json'; AppRegistry.registerComponent(appName, () => App);" > index.js
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
       - name: Create tsconfig.json
         run: |
-          echo '{"compilerOptions": {"target": "esnext", "module": "commonjs", "jsx": "react-native", "strict": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}}' > tsconfig.json
-        if: steps.check-init.outputs.init_needed == 'true' && !exists('tsconfig.json')
+          if [ ! -f tsconfig.json ]; then
+            echo '{"compilerOptions": {"target": "esnext", "module": "commonjs", "jsx": "react-native", "strict": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}}' > tsconfig.json
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
       - name: Create app.json
         run: |
-          echo '{"name": "simplernapp", "displayName": "SimpleRNApp"}' > app.json
-        if: steps.check-init.outputs.init_needed == 'true' && !exists('app.json')
+          if [ ! -f app.json ]; then
+            echo '{"name": "simplernapp", "displayName": "SimpleRNApp"}' > app.json
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
       - name: Create metro.config.js
         run: |
-          echo "module.exports = {
-            transformer: {
-              getTransformOptions: async () => ({
-                transform: {
-                  experimentalImportSupport: false,
-                  inlineRequires: true,
-                },
-              }),
-            },
-          };" > metro.config.js
-        if: steps.check-init.outputs.init_needed == 'true' && !exists('metro.config.js')
+          if [ ! -f metro.config.js ]; then
+            echo "module.exports = {
+              transformer: {
+                getTransformOptions: async () => ({
+                  transform: {
+                    experimentalImportSupport: false,
+                    inlineRequires: true,
+                  },
+                }),
+              },
+            };" > metro.config.js
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
       - name: Create babel.config.js
         run: |
-          echo "module.exports = {
-            presets: ['module:metro-react-native-babel-preset'],
-          };" > babel.config.js
-        if: steps.check-init.outputs.init_needed == 'true' && !exists('babel.config.js')
+          if [ ! -f babel.config.js ]; then
+            echo "module.exports = {
+              presets: ['module:metro-react-native-babel-preset'],
+            };" > babel.config.js
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
       - name: Commit generated files
         run: |
