@@ -23,6 +23,9 @@ jobs:
       with:
         node-version: '18'
 
+    - name: Clear npm cache
+      run: npm cache clean --force
+
     - name: Install dependencies
       run: npm install
       env:
@@ -40,9 +43,9 @@ jobs:
     - name: Initialize React Native Android project
       run: |
         if [ ! -d android ]; then
-          npx react-native@0.72.0 init TempProject
+          npx react-native init TempProject --version 0.72.0 --verbose
           mv TempProject/android .
-          mv TempProject/App.tsx .
+          mv TempProject/App.tsx . || echo "App.tsx not found in TempProject, using existing App.tsx"
           rm -rf TempProject
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
