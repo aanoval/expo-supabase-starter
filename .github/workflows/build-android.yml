@@ -34,16 +34,20 @@ jobs:
           npm install --package-lock-only
         fi
 
+    - name: Install React Native CLI
+      run: npm install -g @react-native-community/cli@11.0.0
+
     - name: Initialize React Native Android project
       run: |
         if [ ! -d android ]; then
-          npx react-native@0.72.0 init TempProject --skip-install
+          npx react-native@0.72.0 init TempProject
           mv TempProject/android .
+          mv TempProject/App.tsx .
           rm -rf TempProject
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
-          git add android
-          git commit -m "Add android folder for React Native build" || echo "No changes to commit"
+          git add android App.tsx
+          git commit -m "Add android folder and App.tsx for React Native build" || echo "No changes to commit"
           git push
         fi
       env:
