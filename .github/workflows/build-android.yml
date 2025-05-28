@@ -43,15 +43,11 @@ jobs:
       uses: actions/setup-java@v3
       with:
         distribution: 'zulu'
-        java-version: '11'
+        java-version: '17' # Diubah ke Java 17 untuk mendukung sdkmanager
         cache: 'gradle'
 
     - name: Install Android SDK
       uses: android-actions/setup-android@v2
-      with:
-        android-version: '33'
-        tools: true
-        build-tools: '33.0.0'
 
     - name: Build APK
       run: |
