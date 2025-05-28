@@ -10,128 +10,137 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Diperlukan untuk commit folder android dan file lainnya
+      contents: write # Diperlukan untuk commit folder dan file
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        submodules: true
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: true
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-    - name: Clear npm cache
-      run: npm cache clean --force
+      - name: Clear npm cache
+        run: npm cache clean --force
 
-    - name: Install dependencies
-      run: npm install
-      env:
-        NODE_OPTIONS: --max-old-space-size=4096
+      - name: Install dependencies
+        run: npm install
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
-    - name: Generate package-lock.json
-      run: |
-        if [ ! -f package-lock.json ]; then
-          npm install --package-lock-only
-        fi
+      - name: Generate package-lock.json
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
+          fi
 
-    - name: Install React Native CLI
-      run: npm install -g @react-native-community/cli@11.0.0
-      if: "!exists('android') || !exists('index.js') || !exists('tsconfig.json') || !exists('app.json') || !exists('metro.config.js') || !exists('babel.config.js')"
+      - name: Check if initialization is needed
+        id: check-init
+        run: |
+          if [ -d android ] && [ -f index.js ] && [ -f tsconfig.json ] && [ -f app.json ] && [ -f metro.config.js ] && [ -f babel.config.js ]; then
+            echo "init_needed=false" >> $GITHUB_OUTPUT
+          else
+            echo "init_needed=true" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Initialize React Native Android project
-      run: |
-        if [ ! -d android ]; then
-          npx react-native init TempProject --version 0.72.0 --verbose
-          mv TempProject/android .
-          mv TempProject/App.tsx . || echo "App.tsx not found in TempProject, using existing App.tsx"
-          rm -rf TempProject
-        fi
-      if: "!exists('android')"
+      - name: Install React Native CLI
+        run: npm install -g @react-native-community/cli@11.0.0
+        if: steps.check-init.outputs.init_needed == 'true'
 
-    - name: Create index.js
-      run: |
-        echo "import { AppRegistry } from 'react-native'; import App from './App'; import { name as appName } from './app.json'; AppRegistry.registerComponent(appName, () => App);" > index.js
-      if: "!exists('index.js')"
+      - name: Initialize React Native Android project
+        run: |
+          if [ ! -d android ]; then
+            npx react-native init TempProject --version 0.72.0 --verbose
+            mv TempProject/android .
+            mv TempProject/App.tsx . || echo "App.tsx not found in TempProject, using existing App.tsx"
+            rm -rf TempProject
+          fi
+        if: steps.check-init.outputs.init_needed == 'true'
 
-    - name: Create tsconfig.json
-      run: |
-        echo '{"compilerOptions": {"target": "esnext", "module": "commonjs", "jsx": "react-native", "strict": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}}' > tsconfig.json
-      if: "!exists('tsconfig.json')"
+      - name: Create index.js
+        run: |
+          echo "import { AppRegistry } from 'react-native'; import App from './App'; import { name as appName } from './app.json'; AppRegistry.registerComponent(appName, () => App);" > index.js
+        if: steps.check-init.outputs.init_needed == 'true' && !exists('index.js')
 
-    - name: Create app.json
-      run: |
-        echo '{"name": "simplernapp", "displayName": "SimpleRNApp"}' > app.json
-      if: "!exists('app.json')"
+      - name: Create tsconfig.json
+        run: |
+          echo '{"compilerOptions": {"target": "esnext", "module": "commonjs", "jsx": "react-native", "strict": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}}' > tsconfig.json
+        if: steps.check-init.outputs.init_needed == 'true' && !exists('tsconfig.json')
 
-    - name: Create metro.config.js
-      run: |
-        echo "module.exports = {
-          transformer: {
-            getTransformOptions: async () => ({
-              transform: {
-                experimentalImportSupport: false,
-                inlineRequires: true,
-              },
-            }),
-          },
-        };" > metro.config.js
-      if: "!exists('metro.config.js')"
+      - name: Create app.json
+        run: |
+          echo '{"name": "simplernapp", "displayName": "SimpleRNApp"}' > app.json
+        if: steps.check-init.outputs.init_needed == 'true' && !exists('app.json')
 
-    - name: Create babel.config.js
-      run: |
-        echo "module.exports = {
-          presets: ['module:metro-react-native-babel-preset'],
-        };" > babel.config.js
-      if: "!exists('babel.config.js')"
+      - name: Create metro.config.js
+        run: |
+          echo "module.exports = {
+            transformer: {
+              getTransformOptions: async () => ({
+                transform: {
+                  experimentalImportSupport: false,
+                  inlineRequires: true,
+                },
+              }),
+            },
+          };" > metro.config.js
+        if: steps.check-init.outputs.init_needed == 'true' && !exists('metro.config.js')
 
-    - name: Commit generated files
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "<>"
-        git add android App.tsx index.js tsconfig.json app.json metro.config.js babel.config.js
-        git commit -m "Add android folder, App.tsx, index.js, tsconfig.json, app.json, metro.config.js, and babel.config.js for React Native build" || echo "No changes to commit"
-        git push
-      if: "!exists('android') || !exists('index.js') || !exists('tsconfig.json') || !exists('app.json') || !exists('metro.config.js') || !exists('babel.config.js')"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create babel.config.js
+        run: |
+          echo "module.exports = {
+            presets: ['module:metro-react-native-babel-preset'],
+          };" > babel.config.js
+        if: steps.check-init.outputs.init_needed == 'true' && !exists('babel.config.js')
 
-    - name: Cache Android SDK
-      uses: actions/cache@v3
-      with:
-        path: ~/.android
-        key: android-sdk-${{ hashFiles('**/android/build.gradle') }}
-        restore-keys: android-sdk-
+      - name: Commit generated files
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add android App.tsx index.js tsconfig.json app.json metro.config.js babel.config.js
+          git commit -m "Add android folder, App.tsx, index.js, tsconfig.json, app.json, metro.config.js, and babel.config.js for React Native build" || echo "No changes to commit"
+          git push
+        if: steps.check-init.outputs.init_needed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Setup Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'zulu'
-        java-version: '17'
-        cache: 'gradle'
+      - name: Cache Android SDK
+        uses: actions/cache@v3
+        with:
+          path: ~/.android
+          key: android-sdk-${{ hashFiles('**/android/build.gradle') }}
+          restore-keys: android-sdk-
 
-    - name: Install Android SDK
-      uses: android-actions/setup-android@v2
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
 
-    - name: Build APK
-      run: |
-        cd android
-        ./gradlew clean
-        ./gradlew assembleRelease --stacktrace
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v2
 
-    - name: Check APK
-      run: |
-        ls -l android/app/build/outputs/apk/release/app-release-unsigned.apk
-        if [ ! -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
-          echo "APK file not found!"
-          exit 1
-        fi
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew clean
+          ./gradlew assembleRelease --stacktrace
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: android-apk
-        path: android/app/build/outputs/apk/release/app-release-unsigned.apk
-        if-no-files-found: error
+      - name: Check APK
+        run: |
+          ls -l android/app/build/outputs/apk/release/app-release-unsigned.apk
+          if [ ! -f "android/app/build/outputs/apk/release/app-release-unsigned.apk" ]; then
+            echo "APK file not found!"
+            exit 1
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
